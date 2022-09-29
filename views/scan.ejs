@@ -456,7 +456,13 @@
       $(document).ready(function () {
         $('#table-results').DataTable({
           fixedHeader: true,
-          fixedColumns: {leftColumns: 3},
+          dom: '<<"#buttons"B><lf>r<t>ip>',
+          buttons: [
+            'pageLength',
+            'copy', 
+            'spacer',
+            'columnsToggle'
+          ],
           scrollCollapse: true
         });
         // $('#table-results').DataTable({
