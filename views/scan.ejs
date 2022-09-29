@@ -68,6 +68,10 @@
     .items-table td:first-child {
       background-color: white;
     }
+
+    #table-results_filter {
+      float: left;
+    }
   </style>
 </head>
 <body class="container-fluid">
@@ -456,7 +460,7 @@
       $(document).ready(function () {
         $('#table-results').DataTable({
           fixedHeader: true,
-          dom: '<<"#buttons"B><lf>r<t>ip>',
+          dom: '<<"#buttons"Bf>r<t>ip>',
           buttons: [
             'pageLength',
             'copy', 
