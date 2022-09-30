@@ -69,8 +69,26 @@
       background-color: white;
     }
 
+    [data-theme="dark"] {
+      --extension-text-color: white;
+      --extension-bg-color: aquamarine;
+    }
+    #table_colbuttons {
+      margin: 30px;
+    }
     #table-results_filter {
       float: left;
+      display:block;
+      color: var(--extension-text-color);
+    }
+    #table-results_info {
+      color: var(--extension-text-color);
+    }
+    #table-results_paginate a.paginate_button {
+      color: var(--extension-text-color);
+    }
+    button.dt-button {
+      background-color: var(--extension-bg-color);
     }
   </style>
 </head>
@@ -460,7 +478,7 @@
       $(document).ready(function () {
         $('#table-results').DataTable({
           fixedHeader: true,
-          dom: '<<"#buttons"Bf>r<t>ip>',
+          dom: '<<"#table_colbuttons"Bf>r<t>ip>',
           buttons: [
             'pageLength',
             'copy', 
