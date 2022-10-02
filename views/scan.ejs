@@ -74,12 +74,17 @@
       --extension-bg-color: aquamarine;
     }
     #table_colbuttons {
-      margin: 30px;
+      margin: 20px;
+      display: block;
     }
     #table-results_filter {
       float: left;
-      display:block;
+      display: block;
       color: var(--extension-text-color);
+    }
+    #table_filters {
+      margin: 30px;
+      display: block;
     }
     #table-results_info {
       color: var(--extension-text-color);
@@ -89,6 +94,12 @@
     }
     button.dt-button {
       background-color: var(--extension-bg-color);
+    }
+    button.dt-button.buttons-columnVisibility.active {
+      box-shadow: 2px 2px 2px 2px rgb(94, 94, 94);
+    }
+    .dt-button-spacer {
+      display: block;
     }
   </style>
 </head>
@@ -478,7 +489,7 @@
       $(document).ready(function () {
         $('#table-results').DataTable({
           fixedHeader: true,
-          dom: '<<"#table_colbuttons"Bf>r<t>ip>',
+          dom: '<<"#table_colbuttons"B><"#table_filters"f>r<t>ip>',
           buttons: [
             'pageLength',
             'copy', 
