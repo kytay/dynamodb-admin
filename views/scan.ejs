@@ -3,6 +3,7 @@
 <head>
   <%- include('partials/head') %>
   <%- include('partials/bootstrap-deps') %>
+  <%- include('partials/datatables-deps') %>
   <script src='/assets/vendor/json-formatter/json-formatter.js'></script>
   <style>
     .table-container {
@@ -35,7 +36,7 @@
     }
 
     .table-wrapper {
-      overflow-x: auto;
+      /*overflow-x: auto;*/
       position: relative;
     }
 
@@ -66,6 +67,39 @@
 
     .items-table td:first-child {
       background-color: white;
+    }
+
+    [data-theme="dark"] {
+      --extension-text-color: white;
+      --extension-bg-color: aquamarine;
+    }
+    #table_colbuttons {
+      margin: 20px;
+      display: block;
+    }
+    #table-results_filter {
+      float: left;
+      display: block;
+      color: var(--extension-text-color);
+    }
+    #table_filters {
+      margin: 30px;
+      display: block;
+    }
+    #table-results_info {
+      color: var(--extension-text-color);
+    }
+    #table-results_paginate a.paginate_button {
+      color: var(--extension-text-color);
+    }
+    button.dt-button {
+      background-color: var(--extension-bg-color);
+    }
+    button.dt-button.buttons-columnVisibility.active {
+      box-shadow: 2px 2px 2px 2px rgb(94, 94, 94);
+    }
+    .dt-button-spacer {
+      display: block;
     }
   </style>
 </head>
@@ -450,6 +484,34 @@
       $('#table-placeholder').addClass('d-none')
 
       updateFilterAutocomplete(data.uniqueKeys)
+
+      //TODO
+      $(document).ready(function () {
+        $('#table-results').DataTable({
+          fixedHeader: true,
+          dom: '<<"#table_colbuttons"B><"#table_filters"f>r<t>ip>',
+          buttons: [
+            'pageLength',
+            'copy', 
+            'spacer',
+            'columnsToggle'
+          ],
+          scrollCollapse: true
+        });
+        // $('#table-results').DataTable({
+          //fixedHeader: true,
+          //fixedColumns: {left:3},
+          //dom: 'Bfrtip',
+          // buttons: [
+          //   'pageLength',
+          //   'copy', 
+          //   'spacer',
+          //   'columnsToggle'
+          // ],
+        //   scrollY: '40vh',
+        //   scrollCollapse: true
+        // });
+      });
     }
 
     window.addEventListener('load', () => {
@@ -508,7 +570,7 @@
     <div class="table-container d-none">
       <div class="scroll-indicator"></div>
       <div class="table-wrapper table-responsive">
-        <table class="table items-table table-hover">
+        <table id="table-results" class="table items-table table-hover">
           <thead class="thead-light">
             <tr id="actions-row">
               <th scope="col">Actions</th>
