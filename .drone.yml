@@ -1,0 +1,173 @@
+---
+kind: pipeline
+type: docker
+name: dynamodb-admin > Merge Request pipeline
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: Notify pipeline starting     
+  image: node
+  environment:
+    TELEGRAM_BOT_TOKEN:
+      from_secret: telegram_sgdevlab_token
+    TELEGRAM_CHAT_ID:
+      from_secret: telegram_notification_group
+  commands: 
+  - npm install -g tgb
+  - tgb-cli --method sendMessage --data "{\"chat_id\":$${TELEGRAM_CHAT_ID}, \"text\":\"${DRONE_REPO} pipeline started by ${DRONE_COMMIT_AUTHOR_NAME}\"}"
+
+- name: Test @mytt/dynamodb-admin-datatable
+  image: node
+  environment:
+    NPM_USER:
+      from_secret: nexus_user
+    NPM_PASS:
+      from_secret: nexus_password
+    NPM_EMAIL: noreply@gmail.com
+    NPM_REGISTRY:
+      from_secret: nexus_url
+  commands:
+  - set -e
+  - npm install
+  - npm test -- --coverage
+  - npx eslint ./lib -f json -o eslint-report.json
+
+- name: Build sonar-project.properties
+  image: alpine
+  commands:
+  - echo "" >  sonar-project.properties
+  - echo "sonar.projectKey=${DRONE_REPO_NAMESPACE}:${DRONE_REPO_NAME}" >> sonar-project.properties
+  - echo "sonar.branch.name=${DRONE_COMMIT_BRANCH}" >> sonar-project.properties
+  - echo "sonar.eslint.reportPaths=eslint-report.json" >> sonar-project.properties
+  - echo "sonar.javascript.lcov.reportPaths=coverage/lcov.info" >> sonar-project.properties
+  # - echo "sonar.pullrequest.key=${DRONE_STAGE_NUMBER}" >>  sonar-project.properties
+  # - echo "sonar.pullrequest.branch=${DRONE_SOURCE_BRANCH}" >>  sonar-project.properties
+  # - echo "sonar.pullrequest.base=${DRONE_TARGET_BRANCH}" >>  sonar-project.properties
+
+- name: Initiate project sonar scan
+  image: aosapps/drone-sonar-plugin:1.1
+  settings:
+    showProfiling: true
+    level: INFO
+    sonar_host: 
+      from_secret: sonar_host
+    sonar_token:
+      from_secret: sonar_secret
+
+- name: Notify pipeline complete with status
+  image: node
+  environment:
+    TELEGRAM_BOT_TOKEN:
+      from_secret: telegram_sgdevlab_token
+    TELEGRAM_CHAT_ID:
+      from_secret: telegram_notification_group
+  commands: 
+  - npm install -g tgb
+  - tgb-cli --method sendMessage --data "{\"chat_id\":$${TELEGRAM_CHAT_ID}, \"text\":\"${DRONE_REPO} pipeline completed with $${DRONE_BUILD_STATUS} $${DRONE_FAILED_STEPS}\"}" 
+  when:
+    status:
+    - success
+    - failure
+
+trigger:
+  # both target branch and source branch 
+  # / - must be in trigger condition
+  branch:
+  - dev
+  - feature/*
+  - bugfix/*
+  - chore/*
+  event:
+  - pull_request
+  action:
+  - opened
+  - synchronized
+
+---
+kind: pipeline
+type: docker
+name: dynamodb-admin > dev pipeline
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: Notify pipeline starting     
+  image: node
+  environment:
+    TELEGRAM_BOT_TOKEN:
+      from_secret: telegram_sgdevlab_token
+    TELEGRAM_CHAT_ID:
+      from_secret: telegram_notification_group
+  commands: 
+  - npm install -g tgb
+  - tgb-cli --method sendMessage --data "{\"chat_id\":$${TELEGRAM_CHAT_ID}, \"text\":\"${DRONE_REPO} pipeline started by ${DRONE_COMMIT_AUTHOR_NAME}\"}"
+
+- name: Test @mytt/dynamodb-admin-datatable
+  image: node
+  commands:
+  - set -e
+  - npm install
+  - npm test -- --coverage
+  - npx eslint ./lib -f json -o eslint-report.json
+
+- name: Publish @mytt/dynamodb-admin-datatable to registry
+  image: node
+  environment:
+    NPM_USER:
+      from_secret: nexus_user
+    NPM_PASS:
+      from_secret: nexus_password
+    NPM_EMAIL: noreply@gmail.com
+    NPM_REGISTRY:
+      from_secret: nexus_url
+  commands:
+  - sed -i 's|"name": "dynamodb-admin"|"name": "@mytt/dynamodb-admin"|g' package.json
+  - npm install -g npm-cli-adduser npm-cli-login
+  - npm-cli-adduser -u $${NPM_USER} -p $${NPM_PASS} -e $${NPM_EMAIL} -r $${NPM_REGISTRY} -s @mytt
+  - npm-cli-login -u $${NPM_USER} -p $${NPM_PASS} -e $${NPM_EMAIL} -r $${NPM_REGISTRY} -s @mytt
+  - npm publish --registry $${NPM_REGISTRY}
+
+- name: Build sonar-project.properties
+  image: alpine
+  commands:
+  - echo "" >  sonar-project.properties
+  - echo "sonar.projectKey=${DRONE_REPO_NAMESPACE}:${DRONE_REPO_NAME}" >> sonar-project.properties
+  - echo "sonar.branch.name=${DRONE_COMMIT_BRANCH}" >> sonar-project.properties
+  - echo "sonar.eslint.reportPaths=eslint-report.json" >> sonar-project.properties
+  - echo "sonar.javascript.lcov.reportPaths=coverage/lcov.info" >> sonar-project.properties
+
+- name: Initiate project sonar scan
+  image: aosapps/drone-sonar-plugin:1.1
+  settings:
+    showProfiling: true
+    level: INFO
+    sonar_host: 
+      from_secret: sonar_host
+    sonar_token:
+      from_secret: sonar_secret
+
+- name: Notify pipeline complete with status
+  image: node
+  environment:
+    TELEGRAM_BOT_TOKEN:
+      from_secret: telegram_sgdevlab_token
+    TELEGRAM_CHAT_ID:
+      from_secret: telegram_notification_group
+  commands: 
+  - npm install -g tgb
+  - tgb-cli --method sendMessage --data "{\"chat_id\":$${TELEGRAM_CHAT_ID}, \"text\":\"${DRONE_REPO} pipeline completed with $${DRONE_BUILD_STATUS} $${DRONE_FAILED_STEPS}\"}" 
+  when:
+    status:
+    - success
+    - failure
+
+trigger:
+  branch:
+  - dev
+  event:
+  - push
